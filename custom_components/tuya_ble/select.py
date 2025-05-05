@@ -22,6 +22,8 @@ from .const import (
     FINGERBOT_MODE_PROGRAM,
     FINGERBOT_MODE_PUSH,
     FINGERBOT_MODE_SWITCH,
+    FINGERBOT_TOUCH_MODE_SWITCH,
+    FINGERBOT_TOUCH_MODE_CLICK,
 )
 from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo
 from .tuya_ble import TuyaBLEDataPointType, TuyaBLEDevice
@@ -63,7 +65,6 @@ class TuyaBLEFingerbotModeMapping(TuyaBLESelectMapping):
             ],
         )
     )
-
 
 @dataclass
 class TuyaBLEWeatherDelayMapping(TuyaBLESelectMapping):
@@ -254,9 +255,34 @@ mapping: dict[str, TuyaBLECategorySelectMapping] = {
     "kg": TuyaBLECategorySelectMapping(
         products={
             **dict.fromkeys(
-                ["mknd4lci", "riecov42", "bs3ubslo"],  # Fingerbot Plus
+                ["mknd4lci", "riecov42"],  # Fingerbot Plus
                 [
                     TuyaBLEFingerbotModeMapping(dp_id=101),
+                ],
+            ),
+             **dict.fromkeys(
+                ["bs3ubslo"],  # Fingerbot touch
+                [
+                    TuyaBLESelectMapping(dp_id=101,
+                                            description=SelectEntityDescription(
+                                                key="fingerbot_mode_1",
+                                                entity_category=EntityCategory.CONFIG,
+                                                options=[
+                                                    FINGERBOT_TOUCH_MODE_SWITCH,
+                                                    FINGERBOT_TOUCH_MODE_CLICK,
+                                                ]
+                                            )
+                                        ),
+                    TuyaBLESelectMapping(dp_id=102,
+                                            description=SelectEntityDescription(
+                                                key="fingerbot_mode_2",
+                                                entity_category=EntityCategory.CONFIG,
+                                                options=[
+                                                    FINGERBOT_TOUCH_MODE_SWITCH,
+                                                    FINGERBOT_TOUCH_MODE_CLICK,
+                                                ]
+                                            )
+                                        ),
                 ],
             ),
         },

@@ -1196,7 +1196,7 @@ class TuyaBLEDevice:
                 case TuyaBLEDataPointType.DT_STRING:
                     value = raw_value.decode()
 
-            _LOGGER.debug(
+            _LOGGER.error(
                 "%s: Received datapoint update, id: %s, type: %s: value: %s",
                 self.address,
                 id,

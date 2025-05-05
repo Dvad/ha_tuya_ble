@@ -39,6 +39,7 @@ from .const import (
     DEVICE_DEF_MANUFACTURER,
     DOMAIN,
     FINGERBOT_BUTTON_EVENT,
+    FINGERBOT_BUTTON_2_EVENT,
     SET_DISCONNECTED_DELAY,
     DPCode,
     DPType,
@@ -64,6 +65,30 @@ class TuyaBLEFingerbotInfo:
 
 
 @dataclass
+class TuyaBLEFingerbotTouchInfo:
+    switch_1: int
+    mode_1: int
+    touch_duration_1: int
+    touch_switch_1: int
+    switch_inversion_1: int
+    custom_timer_1: int
+    off_touch_duration_1: int 
+    double_click_interval_1: int 
+    switch_2: int
+    mode_2: int
+    touch_duration_2: int
+    touch_switch_2: int
+    switch_inversion_2: int
+    custom_timer_2: int
+    off_touch_duration_2: int = 0
+    double_click_interval_2: int = 0
+    custom_programming_1: int = 0
+    custom_programming_2: int = 0
+    custom_programming_3: int = 0
+    custom_programming_4: int = 0
+    
+
+@dataclass
 class TuyaBLEWaterValveInfo:
     """Model a water valve"""
 
@@ -81,6 +106,7 @@ class TuyaBLEProductInfo:
     name: str
     manufacturer: str = DEVICE_DEF_MANUFACTURER
     fingerbot: TuyaBLEFingerbotInfo | None = None
+    fingerbot_touch: TuyaBLEFingerbotTouchInfo | None = None
     watervalve: TuyaBLEWaterValveInfo | None = None
     lock: int | None = None
 
@@ -261,6 +287,36 @@ class TuyaBLEEntity(CoordinatorEntity):
 
         return None
 
+def is_fingerbot_in_program_mode(
+    self: TuyaBLEEntity, product: TuyaBLEProductInfo
+) -> bool:
+    result: bool = True
+    if product.fingerbot:
+        datapoint = self._device.datapoints[product.fingerbot.mode]
+        if datapoint:
+            result = datapoint.value == 2
+    return result
+
+
+def is_fingerbot_in_switch_mode(
+    self: TuyaBLEEntity, product: TuyaBLEProductInfo
+) -> bool:
+    result: bool = True
+    if product.fingerbot:
+        datapoint = self._device.datapoints[product.fingerbot.mode]
+        if datapoint:
+            result = datapoint.value == 1        
+    return result
+
+
+def is_water_valve_in_switch_mode(
+    self: TuyaBLEEntity, product: TuyaBLEProductInfo
+) -> bool:
+    result: bool = False
+    if product.watervalve:
+        result = True
+    return result
+
 
 class TuyaBLECoordinator(DataUpdateCoordinator[None]):
     """Data coordinator for receiving Tuya BLE updates."""
@@ -302,6 +358,26 @@ class TuyaBLECoordinator(DataUpdateCoordinator[None]):
                 if update.id == info.fingerbot.switch and update.changed_by_device:
                     self.hass.bus.fire(
                         FINGERBOT_BUTTON_EVENT,
+                        {
+                            CONF_ADDRESS: self._device.address,
+                            CONF_DEVICE_ID: self._device.device_id,
+                        },
+                    )
+        if info and info.fingerbot_touch:
+            for update in updates:
+                # Handle button 1 event
+                if update.id == info.fingerbot_touch.switch_1 and update.changed_by_device:
+                    self.hass.bus.fire(
+                        FINGERBOT_BUTTON_EVENT,
+                        {
+                            CONF_ADDRESS: self._device.address,
+                            CONF_DEVICE_ID: self._device.device_id,
+                        },
+                    )
+                # Handle button 2 event
+                if update.id == info.fingerbot.switch_2 and update.changed_by_device:
+                    self.hass.bus.fire(
+                        FINGERBOT_BUTTON_2_EVENT,
                         {
                             CONF_ADDRESS: self._device.address,
                             CONF_DEVICE_ID: self._device.device_id,
@@ -451,7 +527,7 @@ devices_database: dict[str, TuyaBLECategoryInfo] = {
     "kg": TuyaBLECategoryInfo(
         products={
             **dict.fromkeys(
-                ["mknd4lci", "riecov42", "bs3ubslo"],  # device product_ids
+                ["mknd4lci", "riecov42"],  # device product_ids
                 TuyaBLEProductInfo(
                     name="Fingerbot Plus",
                     fingerbot=TuyaBLEFingerbotInfo(
@@ -464,6 +540,31 @@ devices_database: dict[str, TuyaBLECategoryInfo] = {
                         manual_control=107,
                         program=109,
                     ),
+                ),
+            ),
+            "bs3ubslo": TuyaBLEProductInfo(  # Dual Button device
+                name="Fingerbot Plus Dual",
+                fingerbot_touch=TuyaBLEFingerbotTouchInfo(
+                    switch_1=1,
+                    mode_1=101,
+                    touch_duration_1=103,
+                    touch_switch_1=105,
+                    switch_inversion_1=107,
+                    custom_timer_1=109,
+                    off_touch_duration_1=117 ,
+                    double_click_interval_1=119 ,
+                    switch_2=2,
+                    mode_2=102,
+                    touch_duration_2=104,
+                    touch_switch_2=106,
+                    switch_inversion_2=108,
+                    custom_timer_2=110,
+                    off_touch_duration_2=118,
+                    double_click_interval_2=120,
+                    custom_programming_1=111,
+                    custom_programming_2=112,
+                    custom_programming_3=113,
+                    custom_programming_4=114
                 ),
             ),
         },

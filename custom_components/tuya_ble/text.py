@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     DOMAIN,
 )
-from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo
+from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo, is_fingerbot_in_program_mode
 from .tuya_ble import TuyaBLEDataPointType, TuyaBLEDevice
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,19 +35,6 @@ TuyaBLETextIsAvailable = Callable[["TuyaBLEText", TuyaBLEProductInfo], bool] | N
 
 
 TuyaBLETextSetter = Callable[["TuyaBLEText", TuyaBLEProductInfo, str], None] | None
-
-
-def is_fingerbot_in_program_mode(
-    self: TuyaBLEText,
-    product: TuyaBLEProductInfo,
-) -> bool:
-    """Determines if in program mode"""
-    result: bool = True
-    if product.fingerbot:
-        datapoint = self._device.datapoints[product.fingerbot.mode]
-        if datapoint:
-            result = datapoint.value == 2
-    return result
 
 
 def get_fingerbot_program(
@@ -146,7 +133,7 @@ mapping: dict[str, TuyaBLECategoryTextMapping] = {
     "kg": TuyaBLECategoryTextMapping(
         products={
             **dict.fromkeys(
-                ["mknd4lci", "riecov42", "bs3ubslo"],  # Fingerbot Plus
+                ["mknd4lci", "riecov42"],  # Fingerbot Plus
                 [
                     TuyaBLETextMapping(
                         dp_id=109,

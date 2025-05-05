@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import partial
 
 import logging
 from typing import Any, Callable
@@ -18,7 +19,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
-from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo
+from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo, is_fingerbot_in_switch_mode, is_fingerbot_in_program_mode, is_water_valve_in_switch_mode
 from .tuya_ble import TuyaBLEDataPointType, TuyaBLEDevice
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,37 +48,6 @@ class TuyaBLESwitchMapping:
     is_available: TuyaBLESwitchIsAvailable = None
     getter: TuyaBLESwitchGetter = None
     setter: TuyaBLESwitchSetter = None
-
-
-def is_fingerbot_in_program_mode(
-    self: TuyaBLESwitch, product: TuyaBLEProductInfo
-) -> bool:
-    result: bool = True
-    if product.fingerbot:
-        datapoint = self._device.datapoints[product.fingerbot.mode]
-        if datapoint:
-            result = datapoint.value == 2
-    return result
-
-
-def is_fingerbot_in_switch_mode(
-    self: TuyaBLESwitch, product: TuyaBLEProductInfo
-) -> bool:
-    result: bool = True
-    if product.fingerbot:
-        datapoint = self._device.datapoints[product.fingerbot.mode]
-        if datapoint:
-            result = datapoint.value == 1
-    return result
-
-
-def is_water_valve_in_switch_mode(
-    self: TuyaBLESwitch, product: TuyaBLEProductInfo
-) -> bool:
-    result: bool = False
-    if product.watervalve:
-        result = True
-    return result
 
 
 def get_fingerbot_program_repeat_forever(
@@ -308,7 +278,7 @@ mapping: dict[str, TuyaBLECategorySwitchMapping] = {
     "kg": TuyaBLECategorySwitchMapping(
         products={
             **dict.fromkeys(
-                ["mknd4lci", "riecov42", "bs3ubslo"],  # Fingerbot Plus
+                ["mknd4lci", "riecov42"],  # Fingerbot Plus
                 [
                     TuyaBLEFingerbotSwitchMapping(dp_id=1),
                     TuyaBLEReversePositionsMapping(dp_id=104),
@@ -341,6 +311,56 @@ mapping: dict[str, TuyaBLECategorySwitchMapping] = {
                     ),
                 ],
             ),
+            "bs3ubslo": [  # Dual Button Fingerbot Plus
+                # Button 1 controls
+                TuyaBLESwitchMapping(dp_id=1,
+                    description=SwitchEntityDescription(
+                        key="switch_1",
+                        name="Switch 1",
+                    )
+                ),
+                TuyaBLESwitchMapping(dp_id=107,
+                    description=SwitchEntityDescription(
+                        key="reverse_positions_1",
+                        name="Reverse switch 1",
+                        icon="mdi:arrow-up-down-bold",
+                        entity_category=EntityCategory.CONFIG,
+                    )
+                ),
+                TuyaBLESwitchMapping(
+                    dp_id=105,
+                    description=SwitchEntityDescription(
+                        key="manual_control_1",
+                        name="Manual control 1",
+                        icon="mdi:gesture-tap-box",
+                        entity_category=EntityCategory.CONFIG,
+                    ),
+                ),
+                # Button 2 controls
+                TuyaBLESwitchMapping(dp_id=2,
+                    description=SwitchEntityDescription(
+                        key="switch_2",
+                        name="Switch 2",
+                    )
+                ),
+                TuyaBLESwitchMapping(dp_id=108,
+                    description=SwitchEntityDescription(
+                        key="reverse_positions_2",
+                        name="Reverse switch 2",
+                        icon="mdi:arrow-up-down-bold",
+                        entity_category=EntityCategory.CONFIG,
+                    )
+                ),
+                TuyaBLESwitchMapping(
+                    dp_id=106,
+                    description=SwitchEntityDescription(
+                        key="manual_control_2",
+                        name="Manual Control 2",
+                        icon="mdi:gesture-tap-box",
+                        entity_category=EntityCategory.CONFIG,
+                    ),
+                ),
+            ],
         },
     ),
     "wk": TuyaBLECategorySwitchMapping(

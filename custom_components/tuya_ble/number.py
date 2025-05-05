@@ -26,7 +26,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
-from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo
+from .devices import TuyaBLEData, TuyaBLEEntity, TuyaBLEProductInfo, is_fingerbot_in_program_mode
 from .tuya_ble import TuyaBLEDataPointType, TuyaBLEDevice
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,19 +57,6 @@ class TuyaBLENumberMapping:
     getter: TuyaBLENumberGetter = None
     setter: TuyaBLENumberSetter = None
     mode: NumberMode = NumberMode.BOX
-
-
-def is_fingerbot_in_program_mode(
-    self: TuyaBLENumber,
-    product: TuyaBLEProductInfo,
-) -> bool:
-    """Returns if in program mode or not"""
-    result: bool = True
-    if product.fingerbot:
-        datapoint = self._device.datapoints[product.fingerbot.mode]
-        if datapoint:
-            result = datapoint.value == 2
-    return result
 
 
 def is_fingerbot_not_in_program_mode(
@@ -356,7 +343,7 @@ mapping: dict[str, TuyaBLECategoryNumberMapping] = {
     "kg": TuyaBLECategoryNumberMapping(
         products={
             **dict.fromkeys(
-                ["mknd4lci", "riecov42", "bs3ubslo"],  # Fingerbot Plus
+                ["mknd4lci", "riecov42"],  # Fingerbot Plus
                 [
                     TuyaBLENumberMapping(
                         dp_id=102,
@@ -397,6 +384,63 @@ mapping: dict[str, TuyaBLECategoryNumberMapping] = {
                         is_available=is_fingerbot_in_program_mode,
                         getter=get_fingerbot_program_position,
                         setter=set_fingerbot_program_position,
+                    ),
+                ],
+            ),
+            **dict.fromkeys(
+                ["bs3ubslo"],  # Fingerbot Plus
+                [
+                    TuyaBLENumberMapping(
+                        dp_id=103,
+                        description=NumberEntityDescription(
+                            key="touch_duration_1",
+                            name="Touch duration 1",
+                            icon="mdi:timer-play",
+                            native_max_value=2000,
+                            native_min_value=100,
+                            native_unit_of_measurement=UnitOfTime.MICROSECONDS,
+                            native_step=100,
+                            entity_category=EntityCategory.CONFIG,
+                        ),
+                    ),
+                   TuyaBLENumberMapping(
+                        dp_id=117,
+                        description=NumberEntityDescription(
+                            key="touch_off_duration_1",
+                            name="Touch off duration 1",
+                            icon="mdi:timer-stop",
+                            native_max_value=2000,
+                            native_min_value=100,
+                            native_unit_of_measurement=UnitOfTime.MICROSECONDS,
+                            native_step=100,
+                            entity_category=EntityCategory.CONFIG,
+                        ),
+                    ),
+                    TuyaBLENumberMapping(
+                        dp_id=104,
+                        description=NumberEntityDescription(
+                            key="touch_duration_2",
+                            name="Touch duration 2",
+                            icon="mdi:timer-play",
+                            native_max_value=2000,
+                            native_min_value=100,
+                            native_unit_of_measurement=UnitOfTime.MICROSECONDS,
+                            native_step=100,
+                            entity_category=EntityCategory.CONFIG,
+                        ),
+                    ),
+                   TuyaBLENumberMapping(
+                        dp_id=118,
+                        description=NumberEntityDescription(
+                            key="touch_off_duration_2",
+                            name="Touch off duration 2",
+                            icon="mdi:timer-stop",
+                            native_max_value=2000,
+                            native_min_value=100,
+                            native_unit_of_measurement=UnitOfTime.MICROSECONDS,
+                            native_step=100,
+                            entity_category=EntityCategory.CONFIG,
+                        ),
                     ),
                 ],
             ),
